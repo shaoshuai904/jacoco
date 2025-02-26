@@ -57,6 +57,7 @@ final class ReportSupport {
 	private final Log log;
 	private final ExecFileLoader loader;
 	private final List<IReportVisitor> formatters;
+	private String diffMethods;
 
 	/**
 	 * Construct a new instance with the given log output.
@@ -68,6 +69,13 @@ final class ReportSupport {
 		this.log = log;
 		this.loader = new ExecFileLoader();
 		this.formatters = new ArrayList<IReportVisitor>();
+	}
+
+	public ReportSupport(final Log log, final String diffMethods) {
+		this.log = log;
+		this.loader = new ExecFileLoader();
+		this.formatters = new ArrayList<IReportVisitor>();
+		this.diffMethods = diffMethods;
 	}
 
 	/**

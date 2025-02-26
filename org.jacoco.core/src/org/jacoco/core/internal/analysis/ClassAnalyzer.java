@@ -13,11 +13,13 @@
 package org.jacoco.core.internal.analysis;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.jacoco.core.internal.analysis.filter.Filters;
 import org.jacoco.core.internal.analysis.filter.IFilter;
 import org.jacoco.core.internal.analysis.filter.IFilterContext;
+import org.jacoco.core.internal.diff.ClassInfoDto;
 import org.jacoco.core.internal.flow.ClassProbesVisitor;
 import org.jacoco.core.internal.flow.MethodProbesVisitor;
 import org.jacoco.core.internal.instr.InstrSupport;
@@ -43,6 +45,9 @@ public class ClassAnalyzer extends ClassProbesVisitor
 
 	private String sourceDebugExtension;
 
+	/** 变更类信息 */
+	private List<ClassInfoDto> classInfos;
+
 	private final IFilter filter;
 
 	/**
@@ -61,6 +66,24 @@ public class ClassAnalyzer extends ClassProbesVisitor
 		this.probes = probes;
 		this.stringPool = stringPool;
 		this.filter = Filters.all();
+	}
+
+	public ClassAnalyzer(final ClassCoverageImpl coverage,
+			final boolean[] probes, final StringPool stringPool,
+			List<ClassInfoDto> classInfos) {
+		this.coverage = coverage;
+		this.probes = probes;
+		this.stringPool = stringPool;
+		this.filter = Filters.all();
+		this.classInfos = classInfos;
+	}
+
+	public List<ClassInfoDto> getClassInfos() {
+		return classInfos;
+	}
+
+	public void setClassInfos(List<ClassInfoDto> classInfos) {
+		this.classInfos = classInfos;
 	}
 
 	@Override
@@ -99,6 +122,7 @@ public class ClassAnalyzer extends ClassProbesVisitor
 
 		final InstructionsBuilder builder = new InstructionsBuilder(probes);
 
+		// 对方法解析完毕后的一个钩子方法，从visitMethod的mv对象调用过来
 		return new MethodAnalyzer(builder) {
 
 			@Override

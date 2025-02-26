@@ -113,6 +113,7 @@ public class ExecutionDataReader {
 			readSessionInfo();
 			return true;
 		case ExecutionDataWriter.BLOCK_EXECUTIONDATA:
+			// 入口在这里
 			readExecutionData();
 			return true;
 		default:
@@ -147,6 +148,7 @@ public class ExecutionDataReader {
 		}
 		final long id = in.readLong();
 		final String name = in.readUTF();
+		// 从流中获取探针信息
 		final boolean[] probes = in.readBooleanArray();
 		executionDataVisitor
 				.visitClassExecution(new ExecutionData(id, name, probes));
