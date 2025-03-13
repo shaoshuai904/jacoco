@@ -12,17 +12,13 @@
  *******************************************************************************/
 package org.jacoco.core.internal.flow;
 
-import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.internal.analysis.ClassAnalyzer;
 import org.jacoco.core.internal.diff.ClassInfoDto;
 import org.jacoco.core.internal.diff.CodeDiffUtil;
 import org.jacoco.core.internal.instr.InstrSupport;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AnalyzerAdapter;
-
-import java.util.List;
 
 /**
  * A {@link org.objectweb.asm.ClassVisitor} that calculates probes for every
@@ -77,14 +73,13 @@ public class ClassProbesAdapter extends ClassVisitor
 			// are not reproducible
 			methodProbes = EMPTY_METHOD_PROBES_VISITOR;
 		} else {
-			List<ClassInfoDto> classInfos = null;
+			ClassInfoDto classInfo = null;
 			if (cv instanceof ClassAnalyzer) {
-				classInfos = ((ClassAnalyzer) cv).getClassInfos();
+				classInfo = ((ClassAnalyzer) cv).getClassInfo();
 			}
-			// 增量代码，有点绕，由于参数定义成final,无法第二次指定,代码无法简化
-			if (null != classInfos && !classInfos.isEmpty()) {
-				if (CodeDiffUtil.checkMethodIn(this.name, name, desc,
-						classInfos)) {
+			if (null != classInfo) {
+				// 增量代码，有点绕，由于参数定义成final,无法第二次指定,代码无法简化
+				if (CodeDiffUtil.checkMethodIn(classInfo, name, desc)) {
 					methodProbes = mv;
 				} else {
 					methodProbes = EMPTY_METHOD_PROBES_VISITOR;

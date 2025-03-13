@@ -12,122 +12,55 @@
  *******************************************************************************/
 package org.jacoco.core.internal.diff;
 
-import org.jacoco.core.analysis.CoverageBuilder;
-import org.objectweb.asm.Type;
-
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 /**
- * @ProjectName: root
- * @Package: org.jacoco.core.internal.diff
- * @Description: 差异代码处理类
- * @Author: duanrui
- * @CreateDate: 2021/1/12 15:17
- * @Version: 1.0
- *           <p>
- *           Copyright: Copyright (c) 2021
+ * 差异代码处理类
  */
 public class CodeDiffUtil {
 
-	private final static String OPERATE_ADD = "ADD";
+	private final static String OPERATE_ADD = "add";
 
 	/**
 	 * 检测类是否在差异代码中
-	 *
-	 * @param className
-	 * @return Boolean
 	 */
-	public static Boolean checkClassIn(String className,
-			List<ClassInfoDto> classInfos) {
-		if (null == classInfos || classInfos.isEmpty() || null == className) {
-			return Boolean.FALSE;
+	public static ClassInfoDto checkClassIn(
+			Map<String, ClassInfoDto> classInfos, String className) {
+		if (null == classInfos || classInfos.isEmpty()) {
+			return null;
 		}
-		// 这里要考虑匿名内部类的问题
-		return classInfos.stream()
-				.anyMatch(c -> className.equals(c.getClassFile())
-						|| className.split("\\$")[0].equals(c.getClassFile()));
+		return classInfos.get(className);
 	}
 
 	/**
 	 * 检测方法是否在差异代码中
-	 *
-	 * @param className
-	 * @param methodName
-	 * @return Boolean
 	 */
-	public static Boolean checkMethodIn(String className, String methodName,
-			String desc, List<ClassInfoDto> classInfos) {
-		// 参数校验
-		if (null == classInfos || classInfos.isEmpty() || null == methodName
-				|| null == className) {
-			return Boolean.FALSE;
-		}
-		ClassInfoDto classInfoDto = classInfos.stream()
-				.filter(c -> className.equals(c.getClassFile())
-						|| className.split("\\$")[0].equals(c.getClassFile()))
-				.findFirst().orElse(null);
-		if (null == classInfoDto) {
+	public static Boolean checkMethodIn(ClassInfoDto classInfoDto,
+			String methodName, String desc) {
+		if (null == classInfoDto || null == methodName) {
 			return Boolean.FALSE;
 		}
 		// 如果是新增类，不用匹配方法，直接运行
-		if (OPERATE_ADD.equals(classInfoDto.getType())) {
+		if (OPERATE_ADD.equalsIgnoreCase(classInfoDto.getType())) {
 			return Boolean.TRUE;
 		}
-		if (null == classInfoDto.getMethodInfos()
-				|| classInfoDto.getMethodInfos().isEmpty()) {
+		List<MethodInfoDto> methodList = classInfoDto.getDiffMethods();
+		if (null == methodList || methodList.isEmpty()) {
 			return Boolean.FALSE;
 		}
-		// 匹配了方法，参数也需要校验
-		return classInfoDto.getMethodInfos().stream().anyMatch(m -> {
+		return methodList.stream().anyMatch(m -> {
+			// 匹配了方法，参数也需要校验
 			if (methodName.equals(m.getMethodName())) {
-				return checkParamsIn(m.getParameters(), desc);
-				// lambda表示式匹配
-			} else if (methodName.contains("lambda$")
-					&& methodName.split("\\$")[1].equals(m.getMethodName())) {
-				return Boolean.TRUE;
+				if (m.methodDesc != null) {
+					return m.methodDesc.equals(desc);
+				} else {
+					return desc == null;
+				}
 			} else {
 				return Boolean.FALSE;
 			}
 		});
-
 	}
 
-	/**
-	 * 匹配餐数
-	 *
-	 * @param params
-	 *            格式：String a
-	 * @param desc
-	 *            转换后格式： java.lang.String
-	 * @return
-	 */
-	public static Boolean checkParamsIn(List<String> params, String desc) {
-		// 解析ASM获取的参数
-		Type[] argumentTypes = Type.getArgumentTypes(desc);
-		// 说明是无参数的方法，匹配成功
-		if (params.size() == 0 && argumentTypes.length == 0) {
-			return Boolean.TRUE;
-		}
-		String[] diffParams = params.toArray(new String[params.size()]);
-		// 只有参数数量完全相等才做下一次比较，Type格式：I C Ljava/lang/String;
-		if (diffParams.length > 0
-				&& argumentTypes.length == diffParams.length) {
-			for (int i = 0; i < argumentTypes.length; i++) {
-				// 去掉包名只保留最后一位匹配,getClassName格式： int java/lang/String
-				String[] args = argumentTypes[i].getClassName().split("\\.");
-				String arg = args[args.length - 1];
-				// 如果参数是内部类类型，再截取下
-				if (arg.contains("$")) {
-					arg = arg.split("\\$")[arg.split("\\$").length - 1];
-				}
-				if (!diffParams[i].contains(arg)) {
-					return Boolean.FALSE;
-				}
-			}
-			// 只有个数和类型全匹配到才算匹配
-			return Boolean.TRUE;
-		}
-		return Boolean.FALSE;
-	}
 }

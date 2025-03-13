@@ -12,10 +12,6 @@
  *******************************************************************************/
 package org.jacoco.core.internal.analysis;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jacoco.core.internal.analysis.filter.Filters;
 import org.jacoco.core.internal.analysis.filter.IFilter;
 import org.jacoco.core.internal.analysis.filter.IFilterContext;
@@ -28,6 +24,9 @@ import org.objectweb.asm.Attribute;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Analyzes the structure of a class.
@@ -46,7 +45,7 @@ public class ClassAnalyzer extends ClassProbesVisitor
 	private String sourceDebugExtension;
 
 	/** 变更类信息 */
-	private List<ClassInfoDto> classInfos;
+	private ClassInfoDto diffClassInfo;
 
 	private final IFilter filter;
 
@@ -70,20 +69,16 @@ public class ClassAnalyzer extends ClassProbesVisitor
 
 	public ClassAnalyzer(final ClassCoverageImpl coverage,
 			final boolean[] probes, final StringPool stringPool,
-			List<ClassInfoDto> classInfos) {
+			ClassInfoDto classInfo) {
 		this.coverage = coverage;
 		this.probes = probes;
 		this.stringPool = stringPool;
 		this.filter = Filters.all();
-		this.classInfos = classInfos;
+		this.diffClassInfo = classInfo;
 	}
 
-	public List<ClassInfoDto> getClassInfos() {
-		return classInfos;
-	}
-
-	public void setClassInfos(List<ClassInfoDto> classInfos) {
-		this.classInfos = classInfos;
+	public ClassInfoDto getClassInfo() {
+		return diffClassInfo;
 	}
 
 	@Override

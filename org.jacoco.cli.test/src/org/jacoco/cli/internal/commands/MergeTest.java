@@ -75,8 +75,6 @@ public class MergeTest extends CommandTestBase {
 		assertEquals(new HashSet<String>(Arrays.asList("a", "b", "c")), names);
 	}
 
-
-
 	private File createExecFile(String name) throws IOException {
 		File file = new File(tmp.getRoot(), name + ".exec");
 		final FileOutputStream execout = new FileOutputStream(file);

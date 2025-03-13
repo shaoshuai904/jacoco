@@ -36,14 +36,48 @@ jacoco二开，主要加入了增量代码匹配的功能
 + 所有修改内容在commit记录可查，为了方便查看，我尽量减少了commit的次数
 
 ### 使用方法
-1. 下载源码，先运行 mvn  spotless:apply 主要是jacoco进行了文件头文件校验，如果新加入了类或者修改了类，需要重新校验，所以要先运行此命令
+1. 下载源码，先运行: mvn  spotless:apply 主要是jacoco进行了文件头文件校验，如果新加入了类或者修改了类，需要重新校验，所以要先运行此命令
 2. 然后运行maven: mvn clean install   -Dmaven.test.skip=true   -Dmaven.javadoc.skip=true
 3. 其中org.jacoco.cli-0.8.7-SNAPSHOT-nodeps.jar为构建出的我们需要的包（我已经构建好，懒得编译从这里下载[下载地址](https://gitee.com/Dray/jacoco/releases)）
 ![输入图片说明](https://images.gitee.com/uploads/images/2021/0401/140301_3d5bbe62_1007820.png "屏幕截图.png")
-4. 其他包都可以使用jacoco官方包，但是版本最好保持一致，也可以用我们自己构建出的包，report时使用我们构建的包，如果是增量覆盖率加入参数--diffCode=
+4. 其他包都可以使用jacoco官方包，但是版本最好保持一致，也可以用我们自己构建出的包，report时使用我们构建的包，如果是增量覆盖率加入参数--diffCodeJson=
 
 ```json
-"[{\"classFile\":\"com/dr/code/diff/config/GitConfig\",\"methodInfos\":[{\"methodName\":\"cloneRepository\",\"parameters\":\"String gitUrl,String codePath,String commitId\"},{\"methodName\":\"diffMethods\",\"parameters\":\"DiffMethodParams diffMethodParams\"},{\"methodName\":\"getClassMethods\",\"parameters\":\"String oldClassFile,String mewClassFile,DiffEntry diffEntry\"}],\"type\":\"MODIFY\"},{\"classFile\":\"com/dr/code/diff/controller/CodeDiffController\",\"methodInfos\":[{\"methodName\":\"getList\",\"parameters\":\"@ApiParam(required = true, name = \\\"gitUrl\\\", value = \\\"git远程仓库地址\\\") @RequestParam(value = \\\"gitUrl\\\") String gitUrl,@ApiParam(required = true, name = \\\"baseVersion\\\", value = \\\"git原始分支或tag\\\") @RequestParam(value = \\\"baseVersion\\\") String baseVersion,@ApiParam(required = true, name = \\\"nowVersion\\\", value = \\\"git现分支或tag\\\") @RequestParam(value = \\\"nowVersion\\\") String nowVersion\"}],\"type\":\"MODIFY\"},{\"classFile\":\"com/dr/code/diff/service/impl/CodeDiffServiceImpl\",\"methodInfos\":[{\"methodName\":\"getDiffCode\",\"parameters\":\"DiffMethodParams diffMethodParams\"}],\"type\":\"MODIFY\"},{\"classFile\":\"com/dr/common/utils/string/ScmStringUtil\",\"methodInfos\":[],\"type\":\"ADD\"}]"
+[
+  {
+    "className": "com/dr/code/diff/config/GitConfig",
+    "diffMethods": [
+      {
+        "methodName": "cloneRepository",
+        "methodDesc": "String gitUrl,String codePath,String commitId"
+      },
+      {
+        "methodName": "diffMethods",
+        "methodDesc": "DiffMethodParams diffMethodParams"
+      },
+      {
+        "methodName": "getClassMethods",
+        "methodDesc": "String oldClassFile,String mewClassFile,DiffEntry diffEntry"
+      }
+    ],
+    "type": "change"
+  },
+  {
+    "className": "com/dr/code/diff/service/impl/CodeDiffServiceImpl",
+    "diffMethods": [
+      {
+        "methodName": "getDiffCode",
+        "methodDesc": "DiffMethodParams diffMethodParams"
+      }
+    ],
+    "type": "change"
+  },
+  {
+    "className": "com/dr/common/utils/string/ScmStringUtil",
+    "diffMethods": [],
+    "type": "add"
+  }
+]
 ```
 由于对象格式的通用性，可以配合 [差异代码获取](https://gitee.com/Dray/code-diff.git) 一起使用   
 近期github不稳定，请访问 https://gitee.com/Dray/jacoco.git
@@ -61,8 +95,8 @@ java -jar org.jacoco.cli-0.8.7-SNAPSHOT-nodeps.jar report jacoco.exec
 --sourcefiles \Desktop\feigin\biz\src\main\java
 --sourcefiles \Desktop\feigin\base\src\main\java 
 --html report --xml jacoco.xml
-//--diffCode "变更json,和 diffCodeFiles 二选一"
---diffCodeFiles /app/diff/change.json 
+//--diffCodeJson "变更json内容 和 diffCodeJsonFiles 二选一"
+--diffCodeJsonFiles /app/diff/change.json 
 --encoding utf8
 ```
 

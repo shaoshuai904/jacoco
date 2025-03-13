@@ -28,6 +28,13 @@ class AntFilesLocator extends InputStreamSourceFileLocator {
 
 	private final Map<String, Resource> resources;
 
+	/**
+	 *
+	 * @param encoding
+	 *            编码格式
+	 * @param tabWidth
+	 *            tab宽度
+	 */
 	public AntFilesLocator(final String encoding, final int tabWidth) {
 		super(encoding, tabWidth);
 		this.resources = new HashMap<String, Resource>();
@@ -40,7 +47,8 @@ class AntFilesLocator extends InputStreamSourceFileLocator {
 	 *            file resource to add
 	 */
 	void add(final Resource file) {
-		resources.put(file.getName().replace(File.separatorChar, '/'), file);
+		String pathKey = file.getName().replace(File.separatorChar, '/');
+		resources.put(pathKey, file);
 	}
 
 	@Override

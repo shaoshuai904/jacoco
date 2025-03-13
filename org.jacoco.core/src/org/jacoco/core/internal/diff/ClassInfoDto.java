@@ -15,38 +15,29 @@ package org.jacoco.core.internal.diff;
 import java.util.List;
 
 /**
- * @author dr
+ * diff class json bean
  */
 public class ClassInfoDto {
-	/**
-	 * java文件
-	 */
-	private String classFile;
-
-	/**
-	 * 类中的方法
-	 */
-	private List<MethodInfoDto> methodInfos;
-
-	/**
-	 * 修改类型
-	 */
+	private String className;
+	private List<MethodInfoDto> diffMethods;
 	private String type;
 
-	public String getClassFile() {
-		return classFile;
+	// ----------- get / set -----------
+
+	public String getClassName() {
+		return className;
 	}
 
-	public void setClassFile(String classFile) {
-		this.classFile = classFile;
+	public void setClassName(String className) {
+		this.className = className;
 	}
 
-	public List<MethodInfoDto> getMethodInfos() {
-		return methodInfos;
+	public List<MethodInfoDto> getDiffMethods() {
+		return diffMethods;
 	}
 
-	public void setMethodInfos(List<MethodInfoDto> methodInfos) {
-		this.methodInfos = methodInfos;
+	public void setDiffMethods(List<MethodInfoDto> diffMethods) {
+		this.diffMethods = diffMethods;
 	}
 
 	public String getType() {

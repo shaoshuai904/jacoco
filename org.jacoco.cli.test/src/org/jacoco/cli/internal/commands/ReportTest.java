@@ -127,8 +127,6 @@ public class ReportTest extends CommandTestBase {
 						.isFile());
 	}
 
-
-	
 	@Test
 	public void should_use_all_values_when_multiple_classfiles_options_are_provided()
 			throws Exception {

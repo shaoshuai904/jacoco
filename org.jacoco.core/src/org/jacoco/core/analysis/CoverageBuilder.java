@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.jacoco.core.analysis;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.jacoco.core.internal.analysis.BundleCoverageImpl;
 import org.jacoco.core.internal.analysis.SourceFileCoverageImpl;
 import org.jacoco.core.internal.diff.ClassInfoDto;
@@ -41,7 +39,7 @@ public class CoverageBuilder implements ICoverageVisitor {
 	private final Map<String, ISourceFileCoverage> sourcefiles;
 
 	/** 新增代码类 */
-	public static List<ClassInfoDto> classInfos;
+	private static Map<String, ClassInfoDto> diffClassInfos;
 
 	/**
 	 * Create a new builder.
@@ -51,23 +49,12 @@ public class CoverageBuilder implements ICoverageVisitor {
 		this.sourcefiles = new HashMap<String, ISourceFileCoverage>();
 	}
 
-	public CoverageBuilder(String classList) {
-		this.classes = new HashMap<String, IClassCoverage>();
-		this.sourcefiles = new HashMap<String, ISourceFileCoverage>();
-		if (null != classList && !"".equals(classList)) {
-			Gson gson = new Gson();
-			classInfos = gson.fromJson(classList,
-					new TypeToken<List<ClassInfoDto>>() {
-					}.getType());
-		}
+	public void setClassDiffJsonInfos(Map<String, ClassInfoDto> map) {
+		diffClassInfos = map;
 	}
 
-	public List<ClassInfoDto> getClassInfos() {
-		return classInfos;
-	}
-
-	public void setClassInfos(List<ClassInfoDto> classInfos) {
-		this.classInfos = classInfos;
+	public Map<String, ClassInfoDto> getClassDiffJsonInfos() {
+		return diffClassInfos;
 	}
 
 	/**
@@ -117,7 +104,7 @@ public class CoverageBuilder implements ICoverageVisitor {
 	}
 
 	// === ICoverageVisitor ===
-
+	@Override
 	public void visitCoverage(final IClassCoverage coverage) {
 		final String name = coverage.getName();
 		final IClassCoverage dup = classes.put(name, coverage);

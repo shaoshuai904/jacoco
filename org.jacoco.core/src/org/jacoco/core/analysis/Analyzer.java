@@ -12,16 +12,6 @@
  *******************************************************************************/
 package org.jacoco.core.analysis;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 import org.jacoco.core.JaCoCo;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.ExecutionDataStore;
@@ -40,6 +30,16 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
 /**
  * An {@link Analyzer} instance processes a set of Java class files and
  * calculates coverage data for them. For each class file the result is reported
@@ -56,7 +56,7 @@ public class Analyzer {
 
 	private final StringPool stringPool;
 
-	private List<ClassInfoDto> classInfos;
+	private Map<String, ClassInfoDto> diffClassInfos;
 
 	/**
 	 * Creates a new analyzer reporting to the given output.
@@ -72,6 +72,10 @@ public class Analyzer {
 		this.executionData = executionData;
 		this.coverageVisitor = coverageVisitor;
 		this.stringPool = new StringPool();
+		if (this.coverageVisitor instanceof CoverageBuilder) {
+			this.diffClassInfos = ((CoverageBuilder) this.coverageVisitor)
+					.getClassDiffJsonInfos();
+		}
 	}
 
 	/**
@@ -84,7 +88,7 @@ public class Analyzer {
 	 * @return ASM visitor to write class definition to
 	 */
 	private ClassVisitor createAnalyzingVisitor(final long classid,
-			final String className) {
+			final String className, final ClassInfoDto classInfoDto) {
 		final ExecutionData data = executionData.get(classid);
 		final boolean[] probes;
 		final boolean noMatch;
@@ -99,7 +103,7 @@ public class Analyzer {
 		final ClassCoverageImpl coverage = new ClassCoverageImpl(className,
 				classid, noMatch);
 		final ClassAnalyzer analyzer = new ClassAnalyzer(coverage, probes,
-				stringPool, this.classInfos) {
+				stringPool, classInfoDto) {
 			@Override
 			public void visitEnd() {
 				super.visitEnd();
@@ -119,20 +123,18 @@ public class Analyzer {
 		if ((reader.getAccess() & Opcodes.ACC_SYNTHETIC) != 0) {
 			return;
 		}
-		if (this.coverageVisitor instanceof CoverageBuilder) {
-			this.classInfos = ((CoverageBuilder) this.coverageVisitor)
-					.getClassInfos();
-		}
-		// 字段不为空说明是增量覆盖
-		if (null != this.classInfos && !this.classInfos.isEmpty()) {
-			// 如果没有匹配到增量代码就无需解析类
-			if (!CodeDiffUtil.checkClassIn(reader.getClassName(),
-					this.classInfos)) {
+
+		ClassInfoDto classInfoDto = null;
+		if (null != diffClassInfos) {
+			// diffClassInfos.isEmpty() 才是配置了 diff
+			classInfoDto = CodeDiffUtil.checkClassIn(diffClassInfos,
+					reader.getClassName());
+			if (classInfoDto == null) {
 				return;
 			}
 		}
 		final ClassVisitor visitor = createAnalyzingVisitor(classId,
-				reader.getClassName());
+				reader.getClassName(), classInfoDto);
 		// 重点，开始解析类里面的方法，逐个方法遍历
 		reader.accept(visitor, 0);
 	}

@@ -18,15 +18,12 @@ import java.util.List;
  * @author dr
  */
 public class MethodInfoDto {
-
-	/**
-	 * 方法名
-	 */
 	public String methodName;
-	/**
-	 * 方法参数
-	 */
-	public List<String> parameters;
+	public String methodDesc;
+	public List<Integer> diffLines;
+	public String type;
+
+	// ----------- get / set -----------
 
 	public String getMethodName() {
 		return methodName;
@@ -36,11 +33,28 @@ public class MethodInfoDto {
 		this.methodName = methodName;
 	}
 
-	public List<String> getParameters() {
-		return parameters;
+	public String getMethodDesc() {
+		return methodDesc;
 	}
 
-	public void setParameters(List<String> parameters) {
-		this.parameters = parameters;
+	public void setMethodDesc(String methodDesc) {
+		this.methodDesc = methodDesc;
 	}
+
+	public List<Integer> getDiffLines() {
+		return diffLines;
+	}
+
+	public void setDiffLines(List<Integer> diffLines) {
+		this.diffLines = diffLines;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
 }
