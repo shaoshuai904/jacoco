@@ -31,11 +31,15 @@ import org.jacoco.core.internal.analysis.ClassAnalyzer;
 import org.jacoco.core.internal.analysis.ClassCoverageImpl;
 import org.jacoco.core.internal.analysis.StringPool;
 import org.jacoco.core.internal.data.CRC64;
+import org.jacoco.core.internal.diff.DiffClassBean;
+import org.jacoco.core.internal.diff.CodeDiffUtil;
 import org.jacoco.core.internal.flow.ClassProbesAdapter;
 import org.jacoco.core.internal.instr.InstrSupport;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.Map;
 
 /**
  * An {@link Analyzer} instance processes a set of Java class files and
@@ -53,6 +57,8 @@ public class Analyzer {
 
 	private final StringPool stringPool;
 
+	private Map<String, DiffClassBean> diffClassInfos;
+
 	/**
 	 * Creates a new analyzer reporting to the given output.
 	 *
@@ -67,6 +73,10 @@ public class Analyzer {
 		this.executionData = executionData;
 		this.coverageVisitor = coverageVisitor;
 		this.stringPool = new StringPool();
+		if (this.coverageVisitor instanceof CoverageBuilder) {
+			this.diffClassInfos = ((CoverageBuilder) this.coverageVisitor)
+					.getClassDiffJsonInfos();
+		}
 	}
 
 	/**
@@ -79,10 +89,11 @@ public class Analyzer {
 	 * @return ASM visitor to write class definition to
 	 */
 	private ClassVisitor createAnalyzingVisitor(final long classid,
-			final String className) {
+			final String className, final DiffClassBean diffClassInfo) {
 		final ExecutionData data = executionData.get(classid);
 		final boolean[] probes;
 		final boolean noMatch;
+		// data为空说明exec文件没有探针信息，说明执行测试的类和进行report的类不一致
 		if (data == null) {
 			probes = null;
 			noMatch = executionData.contains(className);
@@ -93,10 +104,11 @@ public class Analyzer {
 		final ClassCoverageImpl coverage = new ClassCoverageImpl(className,
 				classid, noMatch);
 		final ClassAnalyzer analyzer = new ClassAnalyzer(coverage, probes,
-				stringPool) {
+				stringPool, diffClassInfo) {
 			@Override
 			public void visitEnd() {
 				super.visitEnd();
+				// 这里有个模板方法模式的钩子方法，这里先定义，等后面类的方法解析完再调用此方法
 				coverageVisitor.visitCoverage(coverage);
 			}
 		};
@@ -112,8 +124,18 @@ public class Analyzer {
 		if ((reader.getAccess() & Opcodes.ACC_SYNTHETIC) != 0) {
 			return;
 		}
+		DiffClassBean diffClassBean = null;
+		if (null != diffClassInfos) {
+			// diffClassInfos.isEmpty() 才是配置了 diff
+			diffClassBean = CodeDiffUtil.checkClassIn(diffClassInfos,
+					reader.getClassName());
+			if (diffClassBean == null) {
+				return;
+			}
+		}
 		final ClassVisitor visitor = createAnalyzingVisitor(classId,
-				reader.getClassName());
+				reader.getClassName(), diffClassBean);
+		// 重点，开始解析类里面的方法，逐个方法遍历
 		reader.accept(visitor, 0);
 	}
 
@@ -191,6 +213,7 @@ public class Analyzer {
 			throw analyzerError(location, e);
 		}
 		switch (detector.getType()) {
+		// 编译后的类
 		case ContentTypeDetector.CLASSFILE:
 			analyzeClass(detector.getInputStream(), location);
 			return 1;
@@ -218,6 +241,7 @@ public class Analyzer {
 	 */
 	public int analyzeAll(final File file) throws IOException {
 		int count = 0;
+		// 如果是文件夹递归找到文件再进行解析
 		if (file.isDirectory()) {
 			for (final File f : file.listFiles()) {
 				count += analyzeAll(f);
@@ -225,6 +249,7 @@ public class Analyzer {
 		} else {
 			final InputStream in = new FileInputStream(file);
 			try {
+				// 对编译后的class类进行分析即
 				count += analyzeAll(in, file.getPath());
 			} finally {
 				in.close();

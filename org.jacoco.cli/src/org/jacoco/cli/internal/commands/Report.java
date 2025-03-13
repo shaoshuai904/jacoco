@@ -13,6 +13,22 @@
  *******************************************************************************/
 package org.jacoco.cli.internal.commands;
 
+import org.jacoco.cli.internal.Command;
+import org.jacoco.core.analysis.Analyzer;
+import org.jacoco.core.analysis.CoverageBuilder;
+import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.analysis.IClassCoverage;
+import org.jacoco.core.data.ExecutionDataStore;
+import org.jacoco.core.internal.diff.DiffClassBean;
+import org.jacoco.core.internal.diff.JsonReadUtil;
+import org.jacoco.core.tools.ExecFileLoader;
+import org.jacoco.report.*;
+import org.jacoco.report.csv.CSVFormatter;
+import org.jacoco.report.html.HTMLFormatter;
+import org.jacoco.report.xml.XMLFormatter;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,25 +36,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jacoco.cli.internal.Command;
-import org.jacoco.core.analysis.Analyzer;
-import org.jacoco.core.analysis.CoverageBuilder;
-import org.jacoco.core.analysis.IBundleCoverage;
-import org.jacoco.core.analysis.IClassCoverage;
-import org.jacoco.core.data.ExecutionDataStore;
-import org.jacoco.core.tools.ExecFileLoader;
-import org.jacoco.report.DirectorySourceFileLocator;
-import org.jacoco.report.FileMultiReportOutput;
-import org.jacoco.report.IReportVisitor;
-import org.jacoco.report.ISourceFileLocator;
-import org.jacoco.report.MultiReportVisitor;
-import org.jacoco.report.MultiSourceFileLocator;
-import org.jacoco.report.csv.CSVFormatter;
-import org.jacoco.report.html.HTMLFormatter;
-import org.jacoco.report.xml.XMLFormatter;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
+import java.util.Map;
 
 /**
  * The <code>report</code> command.
@@ -53,6 +51,12 @@ public class Report extends Command {
 
 	@Option(name = "--sourcefiles", usage = "location of the source files", metaVar = "<path>")
 	List<File> sourcefiles = new ArrayList<File>();
+
+	@Option(name = "--diffCodeJson", usage = "input String for diff json", metaVar = "<diffjson>")
+	String diffCodeJson;
+
+	@Option(name = "--diffCodeJsonFiles", usage = "input file/dir for diff json", metaVar = "<filepath>")
+	String diffCodeJsonFiles;
 
 	@Option(name = "--tabwith", usage = "tab stop width for the source pages (default 4)", metaVar = "<n>")
 	int tabwidth = 4;
@@ -80,6 +84,7 @@ public class Report extends Command {
 	@Override
 	public int execute(final PrintWriter out, final PrintWriter err)
 			throws IOException {
+		// 解析exec文件，将解析后得到的探针信息存储到ExecutionDataStore
 		final ExecFileLoader loader = loadExecutionData(out);
 		final IBundleCoverage bundle = analyze(loader.getExecutionDataStore(),
 				out);
@@ -87,6 +92,9 @@ public class Report extends Command {
 		return 0;
 	}
 
+	/**
+	 * 加载exec文件
+	 */
 	private ExecFileLoader loadExecutionData(final PrintWriter out)
 			throws IOException {
 		final ExecFileLoader loader = new ExecFileLoader();
@@ -104,8 +112,20 @@ public class Report extends Command {
 
 	private IBundleCoverage analyze(final ExecutionDataStore data,
 			final PrintWriter out) throws IOException {
-		final CoverageBuilder builder = new CoverageBuilder();
+		CoverageBuilder builder = new CoverageBuilder();
+		// 如果有增量参数将其设置进去
+		if (null != this.diffCodeJsonFiles) {
+			// diffCodeJsonFile 可以是目录，可以是具体文件
+			Map<String, DiffClassBean> map = JsonReadUtil
+					.getClassDiffJsonInfoMaps(this.diffCodeJsonFiles);
+			builder.setClassDiffJsonInfos(map);
+		} else if (null != this.diffCodeJson) {
+			Map<String, DiffClassBean> map = JsonReadUtil
+					.buildClassInfoMap(this.diffCodeJson);
+			builder.setClassDiffJsonInfos(map);
+		}
 		final Analyzer analyzer = new Analyzer(data, builder);
+		// class类用于类方法的比较，源码只用于最后的着色
 		for (final File f : classfiles) {
 			analyzer.analyzeAll(f);
 		}

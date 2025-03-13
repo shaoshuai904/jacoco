@@ -12,12 +12,10 @@
  *******************************************************************************/
 package org.jacoco.core.internal.analysis;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.jacoco.core.internal.analysis.filter.Filters;
 import org.jacoco.core.internal.analysis.filter.IFilter;
 import org.jacoco.core.internal.analysis.filter.IFilterContext;
+import org.jacoco.core.internal.diff.DiffClassBean;
 import org.jacoco.core.internal.flow.ClassProbesVisitor;
 import org.jacoco.core.internal.flow.MethodProbesVisitor;
 import org.jacoco.core.internal.instr.InstrSupport;
@@ -26,6 +24,9 @@ import org.objectweb.asm.Attribute;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Analyzes the structure of a class.
@@ -42,6 +43,9 @@ public class ClassAnalyzer extends ClassProbesVisitor
 	private final Set<String> classAttributes = new HashSet<String>();
 
 	private String sourceDebugExtension;
+
+	/** 变更类信息 */
+	private DiffClassBean diffClassInfo;
 
 	private final IFilter filter;
 
@@ -61,6 +65,20 @@ public class ClassAnalyzer extends ClassProbesVisitor
 		this.probes = probes;
 		this.stringPool = stringPool;
 		this.filter = Filters.all();
+	}
+
+	public ClassAnalyzer(final ClassCoverageImpl coverage,
+			final boolean[] probes, final StringPool stringPool,
+			DiffClassBean classInfo) {
+		this.coverage = coverage;
+		this.probes = probes;
+		this.stringPool = stringPool;
+		this.filter = Filters.all();
+		this.diffClassInfo = classInfo;
+	}
+
+	public DiffClassBean getClassInfo() {
+		return diffClassInfo;
 	}
 
 	@Override
@@ -99,6 +117,7 @@ public class ClassAnalyzer extends ClassProbesVisitor
 
 		final InstructionsBuilder builder = new InstructionsBuilder(probes);
 
+		// 对方法解析完毕后的一个钩子方法，从visitMethod的mv对象调用过来
 		return new MethodAnalyzer(builder) {
 
 			@Override

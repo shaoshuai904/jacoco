@@ -12,14 +12,11 @@
  *******************************************************************************/
 package org.jacoco.core.analysis;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jacoco.core.internal.analysis.BundleCoverageImpl;
 import org.jacoco.core.internal.analysis.SourceFileCoverageImpl;
+import org.jacoco.core.internal.diff.DiffClassBean;
+
+import java.util.*;
 
 /**
  * Builder for hierarchical {@link ICoverageNode} structures from single
@@ -41,13 +38,23 @@ public class CoverageBuilder implements ICoverageVisitor {
 
 	private final Map<String, ISourceFileCoverage> sourcefiles;
 
+	/** 新增代码类 */
+	private static Map<String, DiffClassBean> diffClassInfos;
+
 	/**
 	 * Create a new builder.
-	 *
 	 */
 	public CoverageBuilder() {
 		this.classes = new HashMap<String, IClassCoverage>();
 		this.sourcefiles = new HashMap<String, ISourceFileCoverage>();
+	}
+
+	public void setClassDiffJsonInfos(Map<String, DiffClassBean> map) {
+		diffClassInfos = map;
+	}
+
+	public Map<String, DiffClassBean> getClassDiffJsonInfos() {
+		return diffClassInfos;
 	}
 
 	/**
@@ -97,7 +104,7 @@ public class CoverageBuilder implements ICoverageVisitor {
 	}
 
 	// === ICoverageVisitor ===
-
+	@Override
 	public void visitCoverage(final IClassCoverage coverage) {
 		final String name = coverage.getName();
 		final IClassCoverage dup = classes.put(name, coverage);
