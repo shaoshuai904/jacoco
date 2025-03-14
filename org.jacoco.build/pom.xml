@@ -15,7 +15,7 @@
 
   <groupId>org.jacoco</groupId>
   <artifactId>org.jacoco.build</artifactId>
-  <version>0.8.9</version>
+  <version>${jacoco.version}</version>
   <packaging>pom</packaging>
 
   <name>JaCoCo</name>
@@ -92,7 +92,7 @@
     <module>../org.jacoco.agent</module>
     <module>../org.jacoco.ant</module>
     <module>../org.jacoco.cli</module>
-    <module>../org.jacoco.examples</module>
+<!--    <module>../org.jacoco.examples</module>-->
     <module>../jacoco-maven-plugin</module>
 <!--    <module>../org.jacoco.tests</module>-->
 <!--    <module>../org.jacoco.doc</module>-->
@@ -142,7 +142,7 @@
     <args4j.version>2.0.28</args4j.version>
     <junit.version>4.13.1</junit.version>
     <googlecodeprettify.version>20100721</googlecodeprettify.version>
-
+    <jacoco.version>0.8.9-wb</jacoco.version>
     <!-- ================== -->
     <!-- For SonarQube analysis -->
     <!-- ================== -->
@@ -152,7 +152,6 @@
     <!-- See http://jira.codehaus.org/browse/SONAR-2096 -->
     <sonar.java.source>1.5</sonar.java.source>
     <sonar.java.target>1.5</sonar.java.target>
-    <gson.version>2.9.0</gson.version>
   </properties>
 
   <dependencyManagement>
@@ -160,7 +159,7 @@
       <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
+        <version>2.9.0</version>
       </dependency>
       <!-- Project dependencies -->
       <dependency>
